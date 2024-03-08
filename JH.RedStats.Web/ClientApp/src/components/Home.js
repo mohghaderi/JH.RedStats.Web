@@ -6,40 +6,49 @@ export class Home extends Component {
 
     constructor(props) {
         super(props);
-        this.state = { postsUpVotes: [], userPosts: [], loading: true, lastUpdated: "" };
+        this.state = { postUpVotes: [], userPosts: [], loading: true, lastUpdated: "" };
         this.loadingTimer = 0
     }
 
     componentDidMount() {
         this.loadingTimer = setInterval(() => {
-            this.populateHomeDataDummy().then(r => console.log("stats updated"));
+            this.populateHomeData().then(r => console.log("stats updated"));
         }, 1000)
     }
     
     componentWillUnmount() {
         clearInterval(this.loadingTimer)
     }
-
-    async populateHomeDataDummy() {
-        const data =  {
-            postsUpVotes: [{id: "123", title: "Post 1", count: 100}, {id: "124", title: "Post 2", count: 200}, {id: "125", title: "Post 2", count: 300}],
-            userPosts: [{id: "847", name: "user1", count: 200}, {id: "849", name: "user 2", count: 300}]
-        }
-        this.setState({ postsUpVotes: data.postsUpVotes, userPosts : data.userPosts, loading: false, lastUpdated: new Date() });
-    }
+    
+    // Dummy data for testing purposes only
+    // async populateHomeDataDummy() {
+    //     const data =  {
+    //         postUpVotes: [{id: "123", title: "Post 1", count: 100}, {id: "124", title: "Post 2", count: 200}, {id: "125", title: "Post 2", count: 300}],
+    //         userPosts: [{id: "user1", name: "User Name 1", count: 200}, {id: "user2", name: "User Name 2", count: 300}]
+    //     }
+    //     this.setState({ postUpVotes: data.postUpVotes, userPosts : data.userPosts, loading: false, lastUpdated: new Date() });
+    // }
 
     async populateHomeData() {
         try {
-            const response = await fetch('homeStats');
+            const requestOptions = {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                // body: JSON.stringify({ subReddit: "funny" }),
+            };
+            const query = + new URLSearchParams({
+                subReddit: "funny",
+            }).toString()
+            const response = await fetch('/api/HomeStats?' + query, requestOptions);
             const data = await response.json();
-            this.setState({ postsUpVotes: data.postsUpVotes,userPosts : data.userPosts, loading: false, lastUpdated: new Date() });
+            this.setState({ postUpVotes: data.postUpVotes,userPosts : data.userPosts, loading: false, lastUpdated: new Date() });
         } catch (e) {
             console.log(e)
         }
     }
     
-    static renderPostUpVotesTable(postsUpVotes) {
-        if (!_.isArray(postsUpVotes)) return (<div></div>)
+    static renderPostUpVotesTable(postUpVotes) {
+        if (!_.isArray(postUpVotes)) return (<div></div>)
 
         return (<table className="table table-striped" aria-labelledby="tableLabel">
             <thead>
@@ -49,7 +58,7 @@ export class Home extends Component {
             </tr>
             </thead>
             <tbody>
-            {postsUpVotes.map(p =>
+            {postUpVotes.map(p =>
                 <tr key={p.id}>
                     <td>{p.title}</td>
                     <td>{p.count}</td>
@@ -83,7 +92,7 @@ export class Home extends Component {
     render() {
         if (this.state.loading) return <p><em>Loading...</em></p>
 
-        const postUpVotesTable = Home.renderPostUpVotesTable(this.state.postsUpVotes)
+        const postUpVotesTable = Home.renderPostUpVotesTable(this.state.postUpVotes)
         const userPostsTable = Home.renderUserPostsCount(this.state.userPosts)
 
         return (
