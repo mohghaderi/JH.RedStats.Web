@@ -1,98 +1,136 @@
 ﻿using JH.RedStats.Interfaces;
+using Reddit.Controllers;
 using Reddit.Controllers.EventArgs;
 namespace JH.RedStats.RedditClient;
 
 public class RedditApiClient : IRedditApiClient
 {
     private readonly RedditApiConnectionPool _connectionPool;
+    private IList<IRedditPostModel> _subredditPostsQueue;
+    private bool _isMonitoring;
     
     public RedditApiClient()
     {
         _connectionPool = new RedditApiConnectionPool();
+        _subredditPostsQueue = new List<IRedditPostModel>();
     }
 
-    public async Task<IList<IRedditPostModel>> GetSubRedditPosts(string subRedditName)
+    public IList<IRedditPostModel> GetSubredditPostsQueue()
     {
-        var result = new List<IRedditPostModel>();
-
+        return _subredditPostsQueue;
+    }
+    //
+    // public async Task<IList<IRedditPostModel>> GetSubRedditPosts(string subRedditName)
+    // {
+    //     var result = new List<IRedditPostModel>();
+    //
+    //     var r = _connectionPool.GetClientInstance();
+    //
+    //     //         // Display the name and cake day of the authenticated user.
+    //     // Console.WriteLine("Username: " + r.Account.Me.Name);
+    //     // Console.WriteLine("Cake Day: " + r.Account.Me.Created.ToString("D"));
+    //
+    //     // Get info on another subreddit.
+    //     var askReddit = r.Subreddit(subRedditName).About();
+    //
+    //     var posts = askReddit.Posts.GetNew();
+    //
+    //     foreach (var post in posts)
+    //     {
+    //         result.Add(new RedditPostModel()
+    //         {
+    //             id = post.Id,
+    //             title = post.Title,
+    //             upVotes = post.UpVotes,
+    //             userId = post.Author
+    //         });
+    //     }
+    //
+    //     // askReddit.Posts.GetNew();
+    //     // askReddit.Posts.NewUpdated += C_NewPostsUpdated;
+    //     askReddit.Posts.MonitorNew();
+    //     
+    //     askReddit.Posts.Monitor
+    //
+    //     // // Stop monitoring r/AskReddit for new posts.
+    //     // askReddit.Posts.MonitorNew();
+    //     // askReddit.Posts.NewUpdated -= C_NewPostsUpdated;
+    //
+    //     return await Task.FromResult(result);
+    // }
+    
+    
+    private Subreddit GetSubreddit(string subRedditName)
+    {
+        if (string.IsNullOrEmpty(subRedditName)) throw new ArgumentException("Subreddit name is necessary", nameof(subRedditName));
         var r = _connectionPool.GetClientInstance();
     
-        //         // Display the name and cake day of the authenticated user.
-        // Console.WriteLine("Username: " + r.Account.Me.Name);
-        // Console.WriteLine("Cake Day: " + r.Account.Me.Created.ToString("D"));
-        //
-        // // Retrieve the authenticated user's recent post history.
-        // // Change "new" to "newForced" if you don't want older stickied profile posts to appear first.
-        // var postHistory = r.Account.Me.GetPostHistory(sort: "new");
-        //
-        // // Retrieve the authenticated user's recent comment history.
-        // var commentHistory = r.Account.Me.GetCommentHistory(sort: "new");
-        //
-        // // Create a new subreddit.
-        // var mySub = r.Subreddit("MyNewSubreddit", "My subreddit's title", "Description", "Sidebar").Create();
-
         // Get info on another subreddit.
-        var askReddit = r.Subreddit(subRedditName).About();
+        var subreddit = r.Subreddit(subRedditName);
+        subreddit.Posts.NewUpdated += C_NewPostsUpdated;
+        return subreddit;
+    }
 
-        // Get the top post from a subreddit.
-        var topPost = askReddit.Posts.Top[0];
-        Console.WriteLine(topPost.Author[0]);
+    
+    public async Task<bool> StartMonitoring(string subRedditName)
+    {
+        if (_isMonitoring)
+            throw new Exception("Monitoring has started before. Currently, only one monitoring can be done.");
 
-        // // Create a new self post.
-        // var mySelfPost = mySub.SelfPost("Self Post Title", "Self post text.").Submit();
-        //
-        // // Create a new link post.
-        // // Use .Submit(resubmit: true) instead to force resubmission of duplicate links.
-        // var myLinkPost = mySub.LinkPost("Link Post Title", "http://www.google.com").Submit();  
+        var subreddit = GetSubreddit(subRedditName);
 
-        // // Comment on a post.
-        // var myComment = myLinkPost.Reply("This is my comment.");
-
-        // // Reply to a comment.
-        // var myCommentReply = myComment.Reply("This is my comment reply.");
-
-        // // Create a new subreddit, then create a new link post on said subreddit,
-        // // then comment on said post, then reply to said comment, then delete said comment reply.
-        // // Because I said so.
-        // r.Subreddit("MySub", "Title", "Desc", "Sidebar")
-        // .Create()
-        // .SelfPost("MyPost")
-        // .Submit()
-        // .Reply("My comment.")
-        // .Reply("This comment will be deleted.")
-        // .Delete();
-
-        // Asynchronously monitor r/AskReddit for new posts.
-        
-        var posts = askReddit.Posts.GetNew();
-        
-        foreach (var post in posts)
+        if (subreddit.Posts.NewPostsIsMonitored())
         {
-            result.Add(new RedditPostModel()
+            Console.WriteLine("The posts are already being monitored.");
+            return true;
+        }
+
+        try
+        {
+            subreddit.Posts.MonitorNew();
+            _isMonitoring = true;
+            return true;
+        }
+        catch (Exception e)
+        {
+            return false;
+        }
+    }
+
+    public async Task StopMonitoring(string subRedditName)
+    {
+        if (!_isMonitoring) return;
+        var subreddit = GetSubreddit(subRedditName);
+        if (!subreddit.Posts.NewPostsIsMonitored()) return;
+
+        subreddit.Posts.KillAllMonitoringThreads();
+    }
+    
+
+    public void C_NewPostsUpdated(object sender, PostsUpdateEventArgs e)
+    {
+        foreach (var post in e.Added)
+        {
+            _subredditPostsQueue.Add(new RedditPostModel()
             {
                 id = post.Id,
                 title = post.Title,
                 upVotes = post.UpVotes,
                 userId = post.Author
             });
-        }
-
-        // askReddit.Posts.GetNew();
-        // askReddit.Posts.NewUpdated += C_NewPostsUpdated;
-        // askReddit.Posts.MonitorNew();
-        //
-        // // Stop monitoring r/AskReddit for new posts.
-        // askReddit.Posts.MonitorNew();
-        // askReddit.Posts.NewUpdated -= C_NewPostsUpdated;
-
-        return await Task.FromResult(result);
-    }
-
-    public static void C_NewPostsUpdated(object sender, PostsUpdateEventArgs e)
-    {
-        foreach (var post in e.Added)
-        {
             Console.WriteLine("New Post by " + post.Author + ": " + post.Title);
+        }
+        foreach (var post in e.OldPosts)
+        {
+            Console.WriteLine("OldPosts by " + post.Author + ": " + post.Title);
+        }
+        foreach (var post in e.NewPosts)
+        {
+            Console.WriteLine("NewPosts by " + post.Author + ": " + post.Title);
+        }
+        foreach (var post in e.Removed)
+        {
+            Console.WriteLine("Removed by " + post.Author + ": " + post.Title);
         }
     }
 

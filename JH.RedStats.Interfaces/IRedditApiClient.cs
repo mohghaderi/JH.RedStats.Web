@@ -2,5 +2,6 @@
 
 public interface IRedditApiClient
 {
-    Task<IList<IRedditPostModel>> GetSubRedditPosts(string subRedditName);
+    Task<bool> StartMonitoring(string subRedditName);
+    IList<IRedditPostModel> GetSubredditPostsQueue();
 }
