@@ -6,30 +6,33 @@ export class Home extends Component {
 
     constructor(props) {
         super(props);
-        this.state = { postsUpVotes: [], userPosts: [], loading: true };
+        this.state = { postsUpVotes: [], userPosts: [], loading: true, lastUpdated: "" };
         this.loadingTimer = 0
     }
 
     componentDidMount() {
-        this.populateHomeDataDummy().then(r => console.log("stats updated"));
-        // this.loadingTimer = setIntertval(() => {
-        //     this.populateHomeData()
-        // }, 1000)
+        this.loadingTimer = setInterval(() => {
+            this.populateHomeDataDummy().then(r => console.log("stats updated"));
+        }, 1000)
+    }
+    
+    componentWillUnmount() {
+        clearInterval(this.loadingTimer)
     }
 
     async populateHomeDataDummy() {
         const data =  {
-            postsUpVotes: [{id: "123", title: "Post 1", count: 100}, {id: "124", title: "Post 2", count: 200}, {id: "124", title: "Post 2", count: 300}],
-            userPosts: [{id: "847", name: "user1", count: 200}, {id: "847", name: "user 2", count: 300}]
+            postsUpVotes: [{id: "123", title: "Post 1", count: 100}, {id: "124", title: "Post 2", count: 200}, {id: "125", title: "Post 2", count: 300}],
+            userPosts: [{id: "847", name: "user1", count: 200}, {id: "849", name: "user 2", count: 300}]
         }
-        this.setState({ postsUpVotes: data.postsUpVotes, userPosts : data.userPosts, loading: false });
+        this.setState({ postsUpVotes: data.postsUpVotes, userPosts : data.userPosts, loading: false, lastUpdated: new Date() });
     }
 
     async populateHomeData() {
         try {
             const response = await fetch('homeStats');
             const data = await response.json();
-            this.setState({ postsUpVotes: data.postsUpVotes,userPosts : data.userPosts, loading: false });
+            this.setState({ postsUpVotes: data.postsUpVotes,userPosts : data.userPosts, loading: false, lastUpdated: new Date() });
         } catch (e) {
             console.log(e)
         }
@@ -87,6 +90,7 @@ export class Home extends Component {
             <div>
                 <h1>Reddit Statistics</h1>
 
+                <div>lastUpdated: {this.state.lastUpdated.toISOString()}</div>
                 <hr/>
 
                 <div className={"row"}>
