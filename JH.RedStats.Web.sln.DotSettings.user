@@ -2,5 +2,12 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=89a1d2b4_002D512e_002D47d8_002Db982_002Db4d17136bb83/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Should_Get_List_of_SubReddit_Posts" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;xUnit::DC28EFDB-B9EE-4C96-A22E-6F9953211941::net7.0::JH.RedStats.RedditClient.Tests.RedditApiClientTests.Should_Get_List_of_SubReddit_Posts&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::74F8094A-5074-4516-8DC3-899330253221::net7.0::JH.RedStats.Core.Tests.Streaming.RedditPostEventsQueueTests.Should_queue_events_and_return_results&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::74F8094A-5074-4516-8DC3-899330253221::net7.0::JH.RedStats.Core.Tests.EventProcessors.PostUpVoteStatCounterTests.Should_have_init_top_posts_as_empty_list_with_zero_items&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::74F8094A-5074-4516-8DC3-899330253221::net7.0::JH.RedStats.Core.Tests.EventProcessors.PostUpVoteStatCounterTests.Should_have_posts_with_top_votes_count&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::74F8094A-5074-4516-8DC3-899330253221::net7.0::JH.RedStats.Core.Tests.EventProcessors.PostUpVoteStatCounterTests.Should_set_count_as_zero_when_post_is_removed&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::74F8094A-5074-4516-8DC3-899330253221::net7.0::JH.RedStats.Core.Tests.EventProcessors.UserPostStatCounterTests.Should_have_init_top_posts_as_empty_list_with_zero_items&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::74F8094A-5074-4516-8DC3-899330253221::net7.0::JH.RedStats.Core.Tests.EventProcessors.UserPostStatCounterTests.Should_have_users_with_count_of_their_articles&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::74F8094A-5074-4516-8DC3-899330253221::net7.0::JH.RedStats.Core.Tests.EventProcessors.UserPostStatCounterTests.Should_set_count_as_zero_when_post_is_removed&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

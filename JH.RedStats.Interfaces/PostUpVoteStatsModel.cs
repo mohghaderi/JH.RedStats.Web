@@ -1,6 +1,6 @@
-﻿namespace JH.RedStats.Core.Stats;
+﻿namespace JH.RedStats.Interfaces;
 
-public class PostUpVoteStat
+public class PostUpVoteStatsModel
 {
     /**
      * Post Identifier
@@ -13,5 +13,5 @@ public class PostUpVoteStat
     /**
      * Number of UpVotes in one subreddit
      */
-    public long count { get; set; }
+    public int count { get; set; }
 }

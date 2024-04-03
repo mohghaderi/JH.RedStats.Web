@@ -1,9 +1,9 @@
-﻿namespace JH.RedStats.Core.Stats;
+﻿namespace JH.RedStats.Interfaces;
 
-public class UserPostStat
+public class UserPostStatModel
 {
     /**
-     * User Identifier
+     * Author Identifier
      */
     public string id { get; set; }
     /**
@@ -13,5 +13,5 @@ public class UserPostStat
     /**
      * Number of posts in one subreddit
      */
-    public long count { get; set; }
+    public int count { get; set; }
 }

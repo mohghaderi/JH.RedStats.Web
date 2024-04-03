@@ -24,7 +24,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\JH.RedStats.Core\JH.RedStats.Core.csproj" />
-      <ProjectReference Include="..\JH.RedStats.RedditClient\JH.RedStats.RedditClient.csproj" />
     </ItemGroup>
 
 </Project>

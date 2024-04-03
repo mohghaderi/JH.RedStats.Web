@@ -1,6 +1,6 @@
 ﻿namespace JH.RedStats.Interfaces;
 
-public class RedditConnectionSettings
+public static class RedditConnectionSettings
 {
     // TODO: Move the client settings to appsettings.json file
     public static readonly string DefaultSubReddit = "AskReddit";
@@ -12,4 +12,7 @@ public class RedditConnectionSettings
 
     // Obtain this from JH.RedStats.RedditOauth.Console and paste it here
     public static readonly string RefreshToken = "645362134361-tUIMoCnrKpLXI1grMGw851IlZIawYA";
+
+    // tick wait time to consume items in the queue
+    public static readonly int CounterStatsTicksMs = 100;
 }

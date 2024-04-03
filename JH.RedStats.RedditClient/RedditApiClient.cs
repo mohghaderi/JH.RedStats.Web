@@ -1,4 +1,5 @@
-﻿using JH.RedStats.Interfaces;
+﻿using System.Diagnostics;
+using JH.RedStats.Interfaces;
 using Reddit.Controllers;
 using Reddit.Controllers.EventArgs;
 namespace JH.RedStats.RedditClient;
@@ -6,60 +7,15 @@ namespace JH.RedStats.RedditClient;
 public class RedditApiClient : IRedditApiClient
 {
     private readonly RedditApiConnectionPool _connectionPool;
-    private IList<IRedditPostModel> _subredditPostsQueue;
+    private readonly IRedditPostEventsQueue _subredditPostsQueue;
     private bool _isMonitoring;
-    
-    public RedditApiClient()
+
+    public RedditApiClient(IRedditPostEventsQueue queue)
     {
         _connectionPool = new RedditApiConnectionPool();
-        _subredditPostsQueue = new List<IRedditPostModel>();
+        _subredditPostsQueue = queue;
     }
 
-    public IList<IRedditPostModel> GetSubredditPostsQueue()
-    {
-        return _subredditPostsQueue;
-    }
-    //
-    // public async Task<IList<IRedditPostModel>> GetSubRedditPosts(string subRedditName)
-    // {
-    //     var result = new List<IRedditPostModel>();
-    //
-    //     var r = _connectionPool.GetClientInstance();
-    //
-    //     //         // Display the name and cake day of the authenticated user.
-    //     // Console.WriteLine("Username: " + r.Account.Me.Name);
-    //     // Console.WriteLine("Cake Day: " + r.Account.Me.Created.ToString("D"));
-    //
-    //     // Get info on another subreddit.
-    //     var askReddit = r.Subreddit(subRedditName).About();
-    //
-    //     var posts = askReddit.Posts.GetNew();
-    //
-    //     foreach (var post in posts)
-    //     {
-    //         result.Add(new RedditPostModel()
-    //         {
-    //             id = post.Id,
-    //             title = post.Title,
-    //             upVotes = post.UpVotes,
-    //             userId = post.Author
-    //         });
-    //     }
-    //
-    //     // askReddit.Posts.GetNew();
-    //     // askReddit.Posts.NewUpdated += C_NewPostsUpdated;
-    //     askReddit.Posts.MonitorNew();
-    //     
-    //     askReddit.Posts.Monitor
-    //
-    //     // // Stop monitoring r/AskReddit for new posts.
-    //     // askReddit.Posts.MonitorNew();
-    //     // askReddit.Posts.NewUpdated -= C_NewPostsUpdated;
-    //
-    //     return await Task.FromResult(result);
-    // }
-    
-    
     private Subreddit GetSubreddit(string subRedditName)
     {
         if (string.IsNullOrEmpty(subRedditName)) throw new ArgumentException("Subreddit name is necessary", nameof(subRedditName));
@@ -68,10 +24,10 @@ public class RedditApiClient : IRedditApiClient
         // Get info on another subreddit.
         var subreddit = r.Subreddit(subRedditName);
         subreddit.Posts.NewUpdated += C_NewPostsUpdated;
+        subreddit.Posts.TopUpdated += PostsOnTopUpdated;
         return subreddit;
     }
 
-    
     public async Task<bool> StartMonitoring(string subRedditName)
     {
         if (_isMonitoring)
@@ -88,35 +44,59 @@ public class RedditApiClient : IRedditApiClient
         try
         {
             subreddit.Posts.MonitorNew();
+            subreddit.Posts.MonitorTop();
             _isMonitoring = true;
             return true;
         }
         catch (Exception e)
         {
-            return false;
+            Debug.Print(e.ToString()); // TODO: replace with crash handling
+            return await Task.FromResult(false);
         }
     }
 
-    public async Task StopMonitoring(string subRedditName)
+    public async Task<bool> StopMonitoring(string subRedditName)
     {
-        if (!_isMonitoring) return;
+        if (!_isMonitoring) return false;
         var subreddit = GetSubreddit(subRedditName);
-        if (!subreddit.Posts.NewPostsIsMonitored()) return;
+        if (!subreddit.Posts.NewPostsIsMonitored()) return false;
 
         subreddit.Posts.KillAllMonitoringThreads();
+        return await Task.FromResult(true);
     }
-    
 
-    public void C_NewPostsUpdated(object sender, PostsUpdateEventArgs e)
+    private void PostsOnTopUpdated(object? sender, PostsUpdateEventArgs e)
+    {
+        // Monitoring Top does not change up votes
+        // we need to have our own monitoring, but it takes time to develop,
+        // So, I assume this should be good enough for now.
+        foreach (var post in e.NewPosts)
+        {
+            _subredditPostsQueue.Push(new RedditPostEvent()
+            {
+                postId = post.Id,
+                title = post.Title,
+                upVotes = post.UpVotes,
+                authorId = post.Author,
+                authorName = post.Author,
+                eventType = RedditPostEventType.PostVotesUpdated
+            });
+            Console.WriteLine("NewPosts by " + post.Author + ": " + post.Title);
+        }
+    }
+
+    private void C_NewPostsUpdated(object sender, PostsUpdateEventArgs e)
     {
         foreach (var post in e.Added)
         {
-            _subredditPostsQueue.Add(new RedditPostModel()
+            _subredditPostsQueue.Push(new RedditPostEvent()
             {
-                id = post.Id,
+                postId = post.Id,
                 title = post.Title,
                 upVotes = post.UpVotes,
-                userId = post.Author
+                authorId = post.Author,
+                authorName = post.Author,
+                eventType = RedditPostEventType.PostAdded
             });
             Console.WriteLine("New Post by " + post.Author + ": " + post.Title);
         }
@@ -126,10 +106,28 @@ public class RedditApiClient : IRedditApiClient
         }
         foreach (var post in e.NewPosts)
         {
+            _subredditPostsQueue.Push(new RedditPostEvent()
+            {
+                postId = post.Id,
+                title = post.Title,
+                upVotes = post.UpVotes,
+                authorId = post.Author,
+                authorName = post.Author,
+                eventType = RedditPostEventType.PostAdded
+            });
             Console.WriteLine("NewPosts by " + post.Author + ": " + post.Title);
         }
         foreach (var post in e.Removed)
         {
+            _subredditPostsQueue.Push(new RedditPostEvent()
+            {
+                postId = post.Id,
+                title = post.Title,
+                upVotes = post.UpVotes,
+                authorId = post.Author,
+                authorName = post.Author,
+                eventType = RedditPostEventType.PostRemoved
+            });
             Console.WriteLine("Removed by " + post.Author + ": " + post.Title);
         }
     }

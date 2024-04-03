@@ -6,4 +6,8 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\JH.RedStats.Interfaces\JH.RedStats.Interfaces.csproj" />
+    </ItemGroup>
+
 </Project>
