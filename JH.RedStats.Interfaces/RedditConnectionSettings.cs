@@ -11,7 +11,7 @@ public static class RedditConnectionSettings
     public static readonly string AppSecret = "";
 
     // Obtain this from JH.RedStats.RedditOauth.Console and paste it here
-    public static readonly string RefreshToken = "645362134361-tUIMoCnrKpLXI1grMGw851IlZIawYA";
+    public static readonly string RefreshToken = "";
 
     // tick wait time to consume items in the queue
     public static readonly int CounterStatsTicksMs = 100;
